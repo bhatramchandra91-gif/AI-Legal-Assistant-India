@@ -57,7 +57,7 @@ elif menu_main == "Enter App":
     ])
 
 
-       if menu == "Drafting Engine":
+    if menu == "Drafting Engine":
         st.header("📜 Drafting Engine")
 
         court = st.selectbox("Select Court",[
@@ -75,7 +75,7 @@ elif menu_main == "Enter App":
 
         details = st.text_area("Enter case details")
 
-        if st.button("Generate Draft"):
+    if st.button("Generate Draft"):
             prompt = f"""
             Create a professional {doc_type} for {court} India.
 
@@ -109,12 +109,12 @@ elif menu_main == "Enter App":
         st.header("ADR Mediator")
         st.write("Negotiation AI coming next...")
 
-        elif menu == "Judgments":
+    elif menu == "Judgments":
         st.header("⚖️ Judgment & Precedent Search")
 
         case = st.text_input("Enter case type or section (example: cheque bounce 138)")
 
-        if st.button("Search Judgments"):
+    if st.button("Search Judgments"):
             import requests
             from bs4 import BeautifulSoup
 
@@ -127,10 +127,10 @@ elif menu_main == "Enter App":
             for res in results:
                 st.write(res.text)
 
-        if dashboard == "📁 Case CRM":
+    if dashboard == "📁 Case CRM":
         st.header("Client Case Manager")
 
-        import sqlite3
+    import sqlite3
         conn = sqlite3.connect("cases.db",check_same_thread=False)
         cur = conn.cursor()
         cur.execute("""CREATE TABLE IF NOT EXISTS cases(
@@ -144,7 +144,7 @@ elif menu_main == "Enter App":
         hearing = st.date_input("Next Hearing")
         fees = st.selectbox("Fees",["Paid","Pending","Partial"])
 
-        if st.button("Save Case"):
+    if st.button("Save Case"):
             cur.execute("INSERT INTO cases VALUES(?,?,?,?,?,?)",
                         (case_no,client,phone,case_type,str(hearing),fees))
             conn.commit()
