@@ -1,6 +1,8 @@
 import streamlit as st
 import sqlite3
 from openai import OpenAI
+import requests
+from bs4 import BeautifulSoup
 
 # ------------------ OPENAI ------------------
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -17,6 +19,9 @@ conn.commit()
 lang = st.sidebar.selectbox("🌐 Language", ["English","Hindi","Marathi"])
 
 def translate_text(text, lang):
+    if lang == "English":
+        return text
+
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -95,7 +100,7 @@ elif menu_main == "Enter App":
                     Create a professional {doc_type} for {court} India.
                     Case details:
                     {details}
-                    Use proper Indian legal format.
+                    Use latest Indian legal format with headings.
                     """
 
                     response = client.chat.completions.create(
@@ -107,9 +112,7 @@ elif menu_main == "Enter App":
                     )
 
                     result = response.choices[0].message.content
-
-                    if lang != "English":
-                        result = translate_text(result, lang)
+                    result = translate_text(result, lang)
 
                     st.success("Draft Ready")
                     st.write(result)
@@ -119,68 +122,58 @@ elif menu_main == "Enter App":
                 st.warning("Enter case details")
 
     # ================== JUDGMENT SEARCH ==================
-elif dashboard == "⚖️ Judgment Search":
+    elif dashboard == "⚖️ Judgment Search":
 
-    st.header("📚 Case Summary by Case Number")
+        st.header("📚 Case Summary by Case Number")
 
-    case_number = st.text_input("Enter Case Number or Party Name")
-    manual_text = st.text_area("OR paste full judgment text")
+        case_number = st.text_input("Enter Case Number / Party Name")
+        manual_text = st.text_area("OR paste full judgment")
 
-    if st.button("Get Case Summary"):
+        if st.button("Get Case Summary"):
 
-        if case_number or manual_text:
+            if case_number or manual_text:
 
-            with st.spinner("Fetching & summarizing..."):
+                with st.spinner("Fetching & summarizing..."):
 
-                # ---------------- FETCH FROM INDIANKANOON ----------------
-                if case_number and not manual_text:
-                    import requests
-                    from bs4 import BeautifulSoup
+                    # Fetch from IndianKanoon
+                    if case_number and not manual_text:
+                        url = f"https://indiankanoon.org/search/?formInput={case_number}"
+                        headers = {"User-Agent":"Mozilla/5.0"}
+                        r = requests.get(url, headers=headers)
 
-                    url = f"https://indiankanoon.org/search/?formInput={case_number}"
-                    headers = {"User-Agent":"Mozilla/5.0"}
-                    r = requests.get(url, headers=headers)
+                        soup = BeautifulSoup(r.text,'html.parser')
+                        link = soup.select_one(".result_title a")
 
-                    soup = BeautifulSoup(r.text,'html.parser')
-                    link = soup.select_one(".result_title a")
-
-                    if link:
-                        case_url = "https://indiankanoon.org" + link.get("href")
-                        r2 = requests.get(case_url, headers=headers)
-                        soup2 = BeautifulSoup(r2.text,'html.parser')
-
-                        judgment_text = soup2.get_text()[:12000]
+                        if link:
+                            case_url = "https://indiankanoon.org" + link.get("href")
+                            r2 = requests.get(case_url, headers=headers)
+                            soup2 = BeautifulSoup(r2.text,'html.parser')
+                            judgment_text = soup2.get_text()[:12000]
+                        else:
+                            st.error("Case not found")
+                            st.stop()
                     else:
-                        st.error("Case not found")
-                        st.stop()
-                else:
-                    judgment_text = manual_text
+                        judgment_text = manual_text
 
-                # ---------------- AI SUMMARY ----------------
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role":"system","content":
-                        "You are senior Indian Supreme Court lawyer. Summarize judgment with: facts, issues, decision, legal points."},
+                    # AI summary
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role":"system","content":
+                             "Summarize this Indian judgment into facts, issues, decision, legal points."},
+                            {"role":"user","content": judgment_text}
+                        ]
+                    )
 
-                        {"role":"user","content": judgment_text}
-                    ]
-                )
-
-                result = response.choices[0].message.content
-
-                # -------- Translation --------
-                if lang != "English":
+                    result = response.choices[0].message.content
                     result = translate_text(result, lang)
 
-                st.success("Case Summary Ready")
-                st.write(result)
+                    st.success("Case Summary Ready")
+                    st.write(result)
+                    st.download_button("Download Summary", result)
 
-                st.download_button("Download Summary", result)
-
-        else:
-            st.warning("Enter case number or paste judgment")
-
+            else:
+                st.warning("Enter case number or paste judgment")
 
     # ================== CRM ==================
     elif dashboard == "📁 Case CRM":
@@ -220,8 +213,10 @@ elif dashboard == "⚖️ Judgment Search":
             if text:
                 response = client.chat.completions.create(
                     model="gpt-4o",
-                    messages=[{"role":"user","content":f"Give law firm growth strategy: {text}"}]
+                    messages=[{"role":"user","content":f"Law firm growth strategy: {text}"}]
                 )
-                st.write(response.choices[0].message.content)
+                result = response.choices[0].message.content
+                result = translate_text(result, lang)
+                st.write(result)
             else:
                 st.warning("Enter problem")
