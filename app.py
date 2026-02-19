@@ -17,6 +17,16 @@ conn.commit()
 
 # ------------------ LANGUAGE ------------------
 lang = st.sidebar.selectbox("🌐 Language", ["English","Hindi","Marathi"])
+def translate_text(text, lang):
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role":"system","content":f"Translate into {lang} legal language"},
+            {"role":"user","content":text}
+        ]
+    )
+    return response.choices[0].message.content
+
 
 st.title("⚖️ AI Legal Assistant India")
 
@@ -84,41 +94,61 @@ elif menu_main == "Enter App":
 
         details = st.text_area("Enter case details")
 
-        if st.button("Generate Draft"):
-            prompt = f"""
-            Create a professional {doc_type} for {court} India.
+           if st.button("Generate Draft"):
 
-            Case details:
-            {details}
+        if user_input:
+            with st.spinner("Generating..."):
 
-            Use latest Indian court format with proper headings,
-            legal language and structure.
-            """
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role":"system","content":"You are expert Indian lawyer"},
+                        {"role":"user","content":user_input}
+                    ]
+                )
 
-            response = openai.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role":"user","content":prompt}]
-            )
+                result = response.choices[0].message.content
 
-            result = response.choices[0].message.content
-            st.write(result)
-            st.download_button("Download Draft", result)
+                # Translation
+                if lang != "English":
+                    result = translate_text(result, lang)
+
+                st.success("Draft Ready")
+                st.write(result)
+
+        else:
+            st.warning("Enter case details")
 
     # ================== JUDGMENT SEARCH ==================
-    elif dashboard == "⚖️ Judgment Search":
-        st.header("⚖️ Judgment & Precedent Search")
+elif menu == "Judgments":
+    st.subheader("📚 Indian Judgment AI Search")
 
-        case = st.text_input("Enter case type (example: cheque bounce 138)")
+    query = st.text_input("Enter case type (ex: cheque bounce, divorce, bail)")
 
-        if st.button("Search Judgments"):
-            url = f"https://indiankanoon.org/search/?formInput={case}"
-            r = requests.get(url)
-            soup = BeautifulSoup(r.text,'html.parser')
+    if st.button("Search Judgments"):
+        if query:
 
-            results = soup.select(".result_title")[:5]
+            with st.spinner("Finding relevant judgments..."):
 
-            for res in results:
-                st.write(res.text)
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {
+                        "role":"system",
+                        "content":"You are an expert Indian Supreme Court legal researcher. Give real Indian case references with summary."
+                        },
+                        {
+                        "role":"user",
+                        "content":f"Give top Indian court judgments for: {query} with summary and legal points"
+                        }
+                    ]
+                )
+
+                result = response.choices[0].message.content
+                st.success("Judgments Found")
+                st.write(result)
+        else:
+            st.warning("Enter case topic")
 
     # ================== CRM ==================
     elif dashboard == "📁 Case CRM":
