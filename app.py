@@ -119,31 +119,68 @@ elif menu_main == "Enter App":
                 st.warning("Enter case details")
 
     # ================== JUDGMENT SEARCH ==================
-    elif dashboard == "⚖️ Judgment Search":
-        st.header("📚 Indian Judgment AI Search")
+elif dashboard == "⚖️ Judgment Search":
 
-        query = st.text_input("Enter case type (cheque bounce, divorce, bail)")
+    st.header("📚 Case Summary by Case Number")
 
-        if st.button("Search Judgments"):
-            if query:
-                with st.spinner("Finding judgments..."):
+    case_number = st.text_input("Enter Case Number or Party Name")
+    manual_text = st.text_area("OR paste full judgment text")
 
-                    response = client.chat.completions.create(
-                        model="gpt-4o",
-                        messages=[
-                            {"role":"system","content":"You are Indian Supreme Court legal researcher"},
-                            {"role":"user","content":f"Give Indian court judgments for {query} with summary"}
-                        ]
-                    )
+    if st.button("Get Case Summary"):
 
-                    result = response.choices[0].message.content
+        if case_number or manual_text:
 
-                    if lang != "English":
-                        result = translate_text(result, lang)
+            with st.spinner("Fetching & summarizing..."):
 
-                    st.write(result)
-            else:
-                st.warning("Enter topic")
+                # ---------------- FETCH FROM INDIANKANOON ----------------
+                if case_number and not manual_text:
+                    import requests
+                    from bs4 import BeautifulSoup
+
+                    url = f"https://indiankanoon.org/search/?formInput={case_number}"
+                    headers = {"User-Agent":"Mozilla/5.0"}
+                    r = requests.get(url, headers=headers)
+
+                    soup = BeautifulSoup(r.text,'html.parser')
+                    link = soup.select_one(".result_title a")
+
+                    if link:
+                        case_url = "https://indiankanoon.org" + link.get("href")
+                        r2 = requests.get(case_url, headers=headers)
+                        soup2 = BeautifulSoup(r2.text,'html.parser')
+
+                        judgment_text = soup2.get_text()[:12000]
+                    else:
+                        st.error("Case not found")
+                        st.stop()
+                else:
+                    judgment_text = manual_text
+
+                # ---------------- AI SUMMARY ----------------
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role":"system","content":
+                        "You are senior Indian Supreme Court lawyer. Summarize judgment with: facts, issues, decision, legal points."},
+
+                        {"role":"user","content": judgment_text}
+                    ]
+                )
+
+                result = response.choices[0].message.content
+
+                # -------- Translation --------
+                if lang != "English":
+                    result = translate_text(result, lang)
+
+                st.success("Case Summary Ready")
+                st.write(result)
+
+                st.download_button("Download Summary", result)
+
+        else:
+            st.warning("Enter case number or paste judgment")
+
 
     # ================== CRM ==================
     elif dashboard == "📁 Case CRM":
