@@ -94,9 +94,9 @@ elif menu_main == "Enter App":
 
         details = st.text_area("Enter case details")
 
-           if st.button("Generate Draft"):
+    if st.button("Generate Draft"):
 
-        if user_input:
+    if user_input:
             with st.spinner("Generating..."):
 
                 response = client.chat.completions.create(
