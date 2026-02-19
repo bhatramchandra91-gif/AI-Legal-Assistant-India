@@ -72,14 +72,14 @@ elif menu_main == "Enter App":
     st.success("Welcome Lawyer 👨‍⚖️")
 
     dashboard = st.sidebar.selectbox("Dashboard",[
-    "📜 AI Drafting",
-    "⚖️ Judgment Search",
-    "🤝 ADR Negotiator",
-    "📚 Precedents for Argument",
-    "📁 Case CRM",
-    "📊 Practice Improvements"
-])
-    
+        "📜 AI Drafting",
+        "⚖️ Judgment Search",
+        "🤝 ADR Negotiator",
+        "📚 Precedents for Argument",
+        "📁 Case CRM",
+        "📊 Practice Improvements"
+    ])
+
     # ================== AI DRAFTING ==================
     if dashboard == "📜 AI Drafting":
         st.header("📜 AI Legal Drafting")
@@ -119,7 +119,6 @@ elif menu_main == "Enter App":
                     st.success("Draft Ready")
                     st.write(result)
                     st.download_button("Download Draft", result)
-
             else:
                 st.warning("Enter case details")
 
@@ -137,7 +136,6 @@ elif menu_main == "Enter App":
 
                 with st.spinner("Fetching & summarizing..."):
 
-                    # Fetch from IndianKanoon
                     if case_number and not manual_text:
                         url = f"https://indiankanoon.org/search/?formInput={case_number}"
                         headers = {"User-Agent":"Mozilla/5.0"}
@@ -157,7 +155,6 @@ elif menu_main == "Enter App":
                     else:
                         judgment_text = manual_text
 
-                    # AI summary
                     response = client.chat.completions.create(
                         model="gpt-4o",
                         messages=[
@@ -173,159 +170,143 @@ elif menu_main == "Enter App":
                     st.success("Case Summary Ready")
                     st.write(result)
                     st.download_button("Download Summary", result)
-
             else:
                 st.warning("Enter case number or paste judgment")
 
-    # ================== INTERACTIVE ADR NEGOTIATOR ==================
+    # ================== ADR NEGOTIATOR ==================
     elif dashboard == "🤝 ADR Negotiator":
 
-    st.header("🤝 Interactive AI Mediation Courtroom")
+        st.header("🤝 Interactive AI Mediation Courtroom")
 
-    if "adr_stage" not in st.session_state:
-        st.session_state.adr_stage = 1
-        st.session_state.case_data = {}
-        st.session_state.score = 50
-
-    # -------- STAGE 1: CASE INPUT --------
-    if st.session_state.adr_stage == 1:
-
-        st.subheader("Step 1: Enter Case")
-
-        dispute = st.selectbox("Dispute type",[
-            "Cheque Bounce",
-            "Property",
-            "Divorce",
-            "Business",
-            "Employment",
-            "Other"
-        ])
-
-        facts = st.text_area("Case facts")
-        your_role = st.selectbox("Your role",[
-            "Petitioner","Respondent","Accused","Complainant"
-        ])
-
-        if st.button("Start Mock Trial"):
-            if facts:
-                st.session_state.case_data = {
-                    "dispute":dispute,
-                    "facts":facts,
-                    "role":your_role
-                }
-                st.session_state.adr_stage = 2
-                st.rerun()
-             else:
-                st.warning("Enter case facts")
-
-    # -------- STAGE 2: AI SCENARIO --------
-    elif st.session_state.adr_stage == 2:
-
-        st.subheader("Step 2: AI Judge Scenario")
-
-        case = st.session_state.case_data
-
-        if "scenario" not in st.session_state:
-
-            prompt = f"""
-            Create a realistic Indian court mediation scenario.
-
-            Case: {case['dispute']}
-            Facts: {case['facts']}
-            User role: {case['role']}
-
-            Give:
-            - Opponent argument
-            - Judge observation
-            - 3 possible actions user can choose
-            - Winning probability for each option (in %)
-            """
-
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role":"user","content":prompt}]
-            )
-
-            st.session_state.scenario = response.choices[0].message.content
-
-        st.write(st.session_state.scenario)
-
-        choice = st.radio("Choose your action:",[
-            "Strong legal argument",
-            "Settlement negotiation",
-            "Aggressive litigation"
-        ])
-
-        if st.button("Submit Decision"):
-
-            prompt2 = f"""
-            User selected: {choice}
-
-            Based on Indian legal practice:
-            Update winning probability
-            Give judge reaction
-            Give next move options
-            """
-
-            response2 = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role":"user","content":prompt2}]
-            )
-
-            result = response2.choices[0].message.content
-            result = translate_text(result, lang)
-
-            st.write(result)
-
-            # score change simulation
-            import random
-            change = random.randint(-10,15)
-            st.session_state.score += change
-            st.progress(min(max(st.session_state.score,0),100))
-            st.write(f"### 🧠 Case Winning Probability: {st.session_state.score}%")
-
-            st.session_state.adr_stage = 3
-
-    # -------- STAGE 3: FINAL SETTLEMENT --------
-    elif st.session_state.adr_stage == 3:
-
-        st.subheader("Step 3: Final Verdict / Settlement")
-
-        if st.button("Generate Final Outcome"):
-
-            prompt3 = f"""
-            Generate final mediation result.
-
-            Winning probability: {st.session_state.score}%
-
-            If above 60% → user likely wins  
-            If below 40% → suggest settlement  
-            Provide final judge style decision
-            """
-
-            response3 = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role":"user","content":prompt3}]
-            )
-
-            result = response3.choices[0].message.content
-            result = translate_text(result, lang)
-
-            st.success("🏛 Final Mediation Result")
-            st.write(result)
-
-        if st.button("Start New Case"):
+        if "adr_stage" not in st.session_state:
             st.session_state.adr_stage = 1
+            st.session_state.case_data = {}
             st.session_state.score = 50
-            st.session_state.scenario = ""
-            st.rerun()
 
-     # ================== PRECEDENTS FOR ARGUMENT ==================
+        if st.session_state.adr_stage == 1:
+            st.subheader("Step 1: Enter Case")
+
+            dispute = st.selectbox("Dispute type",[
+                "Cheque Bounce","Property","Divorce","Business","Employment","Other"
+            ])
+            facts = st.text_area("Case facts")
+            your_role = st.selectbox("Your role",[
+                "Petitioner","Respondent","Accused","Complainant"
+            ])
+
+            if st.button("Start Mock Trial"):
+                if facts:
+                    st.session_state.case_data = {
+                        "dispute":dispute,
+                        "facts":facts,
+                        "role":your_role
+                    }
+                    st.session_state.adr_stage = 2
+                    st.rerun()
+                else:
+                    st.warning("Enter case facts")
+
+        elif st.session_state.adr_stage == 2:
+
+            st.subheader("Step 2: AI Judge Scenario")
+            case = st.session_state.case_data
+
+            if "scenario" not in st.session_state:
+                prompt = f"""
+                Create a realistic Indian court mediation scenario.
+
+                Case: {case['dispute']}
+                Facts: {case['facts']}
+                User role: {case['role']}
+
+                Give:
+                - Opponent argument
+                - Judge observation
+                - 3 possible actions user can choose
+                - Winning probability for each option (in %)
+                """
+
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role":"user","content":prompt}]
+                )
+                st.session_state.scenario = response.choices[0].message.content
+
+            st.write(st.session_state.scenario)
+
+            choice = st.radio("Choose your action:",[
+                "Strong legal argument",
+                "Settlement negotiation",
+                "Aggressive litigation"
+            ])
+
+            if st.button("Submit Decision"):
+
+                prompt2 = f"""
+                User selected: {choice}
+                Based on Indian legal practice:
+                Update winning probability
+                Give judge reaction
+                Give next move options
+                """
+
+                response2 = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role":"user","content":prompt2}]
+                )
+
+                result = response2.choices[0].message.content
+                result = translate_text(result, lang)
+
+                st.write(result)
+
+                import random
+                change = random.randint(-10,15)
+                st.session_state.score += change
+                st.progress(min(max(st.session_state.score,0),100))
+                st.write(f"### 🧠 Case Winning Probability: {st.session_state.score}%")
+
+                st.session_state.adr_stage = 3
+
+        elif st.session_state.adr_stage == 3:
+
+            st.subheader("Step 3: Final Verdict / Settlement")
+
+            if st.button("Generate Final Outcome"):
+
+                prompt3 = f"""
+                Generate final mediation result.
+
+                Winning probability: {st.session_state.score}%
+
+                If above 60% → user likely wins  
+                If below 40% → suggest settlement  
+                Provide final judge style decision
+                """
+
+                response3 = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role":"user","content":prompt3}]
+                )
+
+                result = response3.choices[0].message.content
+                result = translate_text(result, lang)
+
+                st.success("🏛 Final Mediation Result")
+                st.write(result)
+
+            if st.button("Start New Case"):
+                st.session_state.adr_stage = 1
+                st.session_state.score = 50
+                st.session_state.scenario = ""
+                st.rerun()
+
+    # ================== PRECEDENTS ==================
     elif dashboard == "📚 Precedents for Argument":
 
         st.header("📚 AI Precedent Finder for Court Arguments")
 
-        case_topic = st.text_input("Enter case topic (example: cheque bounce 138 NI Act)")
+        case_topic = st.text_input("Enter case topic")
         your_side = st.selectbox("Which side?",["Petitioner","Respondent","Accused","Complainant"])
         facts = st.text_area("Enter brief case facts")
 
@@ -335,7 +316,6 @@ elif menu_main == "Enter App":
 
                 with st.spinner("Finding best court precedents..."):
 
-                    # ---- AI PRECEDENT SEARCH ----
                     prompt = f"""
                     You are senior Supreme Court legal researcher.
 
@@ -361,26 +341,9 @@ elif menu_main == "Enter App":
 
                     st.success("Top Precedents for Argument")
                     st.write(result)
-
-                    # ---- OPTIONAL SCRAPER ----
-                    try:
-                        url = f"https://indiankanoon.org/search/?formInput={case_topic}"
-                        r = requests.get(url, headers={"User-Agent":"Mozilla/5.0"})
-                        soup = BeautifulSoup(r.text,'html.parser')
-                        results = soup.select(".result_title")[:5]
-
-                        st.subheader("🔗 Relevant Case Links")
-                        for res in results:
-                            st.write(res.text)
-
-                    except:
-                        pass
-
                     st.download_button("Download Precedents", result)
-
             else:
                 st.warning("Enter case topic")
-
 
     # ================== CRM ==================
     elif dashboard == "📁 Case CRM":
@@ -410,7 +373,7 @@ elif menu_main == "Enter App":
             for r in rows:
                 st.write(r)
 
-    # ================== PRACTICE IMPROVEMENTS ==================
+    # ================== PRACTICE ==================
     elif dashboard == "📊 Practice Improvements":
         st.header("AI Practice Growth Suggestions")
 
