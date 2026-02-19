@@ -1,13 +1,11 @@
 import streamlit as st
 import sqlite3
-import openai
-import requests
-from bs4 import BeautifulSoup
+from openai import OpenAI
+
+# ------------------ OPENAI ------------------
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.set_page_config(page_title="AI Legal Assistant", layout="wide")
-
-# ------------------ OPENAI KEY ------------------
-openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # ------------------ USER DATABASE ------------------
 conn = sqlite3.connect("users.db", check_same_thread=False)
@@ -17,6 +15,7 @@ conn.commit()
 
 # ------------------ LANGUAGE ------------------
 lang = st.sidebar.selectbox("🌐 Language", ["English","Hindi","Marathi"])
+
 def translate_text(text, lang):
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -26,7 +25,6 @@ def translate_text(text, lang):
         ]
     )
     return response.choices[0].message.content
-
 
 st.title("⚖️ AI Legal Assistant India")
 
@@ -80,75 +78,72 @@ elif menu_main == "Enter App":
         st.header("📜 AI Legal Drafting")
 
         court = st.selectbox("Select Court",[
-            "Session Court",
-            "High Court",
-            "Supreme Court"
+            "Session Court","High Court","Supreme Court"
         ])
 
         doc_type = st.selectbox("Select Document",[
-            "Legal Notice",
-            "Affidavit",
-            "Agreement",
-            "NDA"
+            "Legal Notice","Affidavit","Agreement","NDA"
         ])
 
         details = st.text_area("Enter case details")
 
-    if st.button("Generate Draft"):
+        if st.button("Generate Draft"):
+            if details:
+                with st.spinner("Generating draft..."):
 
-    if user_input:
-            with st.spinner("Generating..."):
+                    prompt = f"""
+                    Create a professional {doc_type} for {court} India.
+                    Case details:
+                    {details}
+                    Use proper Indian legal format.
+                    """
 
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role":"system","content":"You are expert Indian lawyer"},
-                        {"role":"user","content":user_input}
-                    ]
-                )
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role":"system","content":"You are expert Indian lawyer"},
+                            {"role":"user","content":prompt}
+                        ]
+                    )
 
-                result = response.choices[0].message.content
+                    result = response.choices[0].message.content
 
-                # Translation
-                if lang != "English":
-                    result = translate_text(result, lang)
+                    if lang != "English":
+                        result = translate_text(result, lang)
 
-                st.success("Draft Ready")
-                st.write(result)
+                    st.success("Draft Ready")
+                    st.write(result)
+                    st.download_button("Download Draft", result)
 
-        else:
-            st.warning("Enter case details")
+            else:
+                st.warning("Enter case details")
 
     # ================== JUDGMENT SEARCH ==================
-elif menu == "Judgments":
-    st.subheader("📚 Indian Judgment AI Search")
+    elif dashboard == "⚖️ Judgment Search":
+        st.header("📚 Indian Judgment AI Search")
 
-    query = st.text_input("Enter case type (ex: cheque bounce, divorce, bail)")
+        query = st.text_input("Enter case type (cheque bounce, divorce, bail)")
 
-    if st.button("Search Judgments"):
-        if query:
+        if st.button("Search Judgments"):
+            if query:
+                with st.spinner("Finding judgments..."):
 
-            with st.spinner("Finding relevant judgments..."):
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role":"system","content":"You are Indian Supreme Court legal researcher"},
+                            {"role":"user","content":f"Give Indian court judgments for {query} with summary"}
+                        ]
+                    )
 
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {
-                        "role":"system",
-                        "content":"You are an expert Indian Supreme Court legal researcher. Give real Indian case references with summary."
-                        },
-                        {
-                        "role":"user",
-                        "content":f"Give top Indian court judgments for: {query} with summary and legal points"
-                        }
-                    ]
-                )
+                    result = response.choices[0].message.content
 
-                result = response.choices[0].message.content
-                st.success("Judgments Found")
-                st.write(result)
-        else:
-            st.warning("Enter case topic")
+                    if lang != "English":
+                        result = translate_text(result, lang)
+
+                    st.write(result)
+            else:
+                st.warning("Enter topic")
 
     # ================== CRM ==================
     elif dashboard == "📁 Case CRM":
@@ -178,15 +173,18 @@ elif menu == "Judgments":
             for r in rows:
                 st.write(r)
 
-    # ================== IMPROVEMENTS ==================
+    # ================== PRACTICE IMPROVEMENTS ==================
     elif dashboard == "📊 Practice Improvements":
         st.header("AI Practice Growth Suggestions")
 
-        text = st.text_area("Describe your practice issues")
+        text = st.text_area("Describe your practice problems")
 
         if st.button("Get Suggestions"):
-            response = openai.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role":"user","content":f"Give business growth advice for lawyer: {text}"}]
-            )
-            st.write(response.choices[0].message.content)
+            if text:
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role":"user","content":f"Give law firm growth strategy: {text}"}]
+                )
+                st.write(response.choices[0].message.content)
+            else:
+                st.warning("Enter problem")
