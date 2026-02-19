@@ -178,7 +178,7 @@ elif menu_main == "Enter App":
                 st.warning("Enter case number or paste judgment")
 
     # ================== INTERACTIVE ADR NEGOTIATOR ==================
-elif dashboard == "🤝 ADR Negotiator":
+    elif dashboard == "🤝 ADR Negotiator":
 
     st.header("🤝 Interactive AI Mediation Courtroom")
 
@@ -215,7 +215,7 @@ elif dashboard == "🤝 ADR Negotiator":
                 }
                 st.session_state.adr_stage = 2
                 st.rerun()
-            else:
+             else:
                 st.warning("Enter case facts")
 
     # -------- STAGE 2: AI SCENARIO --------
