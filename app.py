@@ -46,16 +46,16 @@ elif menu_main == "Enter App":
         st.warning("Login first")
         st.stop()
 
-    st.success("Welcome to AI Legal Assistant")
+    st.success("Welcome Lawyer 👨‍⚖️")
 
-    menu = st.sidebar.selectbox("Select Module",[
-    "Drafting Engine",
-    "OCR Converter",
-    "ADR Mediator",
-    "Judgments",
-    "CRM Dashboard",
-    "Improvements"
+    dashboard = st.sidebar.selectbox("Dashboard",[
+        "📜 AI Drafting",
+        "⚖️ Judgment Search",
+        "📁 Case CRM",
+        "📄 OCR Scanner",
+        "📊 Practice Improvements"
     ])
+
 
        if menu == "Drafting Engine":
         st.header("📜 Drafting Engine")
@@ -127,9 +127,34 @@ elif menu_main == "Enter App":
             for res in results:
                 st.write(res.text)
 
-    elif menu == "CRM Dashboard":
-        st.header("CRM Dashboard")
-        st.write("Case manager coming next...")
+        if dashboard == "📁 Case CRM":
+        st.header("Client Case Manager")
+
+        import sqlite3
+        conn = sqlite3.connect("cases.db",check_same_thread=False)
+        cur = conn.cursor()
+        cur.execute("""CREATE TABLE IF NOT EXISTS cases(
+            case_no TEXT, client TEXT, phone TEXT,
+            case_type TEXT, hearing TEXT, fees TEXT)""")
+
+        case_no = st.text_input("Case Number")
+        client = st.text_input("Client Name")
+        phone = st.text_input("Phone")
+        case_type = st.text_input("Case Type")
+        hearing = st.date_input("Next Hearing")
+        fees = st.selectbox("Fees",["Paid","Pending","Partial"])
+
+        if st.button("Save Case"):
+            cur.execute("INSERT INTO cases VALUES(?,?,?,?,?,?)",
+                        (case_no,client,phone,case_type,str(hearing),fees))
+            conn.commit()
+            st.success("Case saved")
+
+        if st.button("Show All Cases"):
+            rows = cur.execute("SELECT * FROM cases").fetchall()
+            for r in rows:
+                st.write(r)
+
 
     elif menu == "Improvements":
         st.header("System Improvements")
