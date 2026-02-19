@@ -109,9 +109,23 @@ elif menu_main == "Enter App":
         st.header("ADR Mediator")
         st.write("Negotiation AI coming next...")
 
-    elif menu == "Judgments":
-        st.header("Judgment Search")
-        st.write("Judgment scraper coming next...")
+        elif menu == "Judgments":
+        st.header("⚖️ Judgment & Precedent Search")
+
+        case = st.text_input("Enter case type or section (example: cheque bounce 138)")
+
+        if st.button("Search Judgments"):
+            import requests
+            from bs4 import BeautifulSoup
+
+            url = f"https://indiankanoon.org/search/?formInput={case}"
+            r = requests.get(url)
+            soup = BeautifulSoup(r.text,'html.parser')
+
+            results = soup.select(".result_title")[:5]
+
+            for res in results:
+                st.write(res.text)
 
     elif menu == "CRM Dashboard":
         st.header("CRM Dashboard")
