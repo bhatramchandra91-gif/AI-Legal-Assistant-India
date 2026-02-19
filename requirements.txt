@@ -2,6 +2,5 @@ streamlit
 openai
 beautifulsoup4
 requests
-googletrans==4.0.0-rc1
 sqlalchemy
 
