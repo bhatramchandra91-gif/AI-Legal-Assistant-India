@@ -1,4 +1,14 @@
 streamlit
 openai
+pytesseract
+easyocr
+pdfplumber
+pymupdf
+playwright
 beautifulsoup4
+selenium
 requests
+googletrans==4.0.0-rc1
+sqlalchemy
+passlib
+python-jose
