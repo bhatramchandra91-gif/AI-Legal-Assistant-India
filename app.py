@@ -1,22 +1,29 @@
 import streamlit as st
 import sqlite3
+import openai
+import requests
+from bs4 import BeautifulSoup
 
 st.set_page_config(page_title="AI Legal Assistant", layout="wide")
 
-# ---------- DATABASE ----------
+# ------------------ OPENAI KEY ------------------
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+# ------------------ USER DATABASE ------------------
 conn = sqlite3.connect("users.db", check_same_thread=False)
 cur = conn.cursor()
 cur.execute("CREATE TABLE IF NOT EXISTS users(username TEXT, password TEXT)")
 conn.commit()
 
-# ---------- LANGUAGE ----------
+# ------------------ LANGUAGE ------------------
 lang = st.sidebar.selectbox("🌐 Language", ["English","Hindi","Marathi"])
 
-# ---------- LOGIN SYSTEM ----------
 st.title("⚖️ AI Legal Assistant India")
 
+# ------------------ LOGIN MENU ------------------
 menu_main = st.sidebar.selectbox("Menu",["Login","Signup","Enter App"])
 
+# ------------------ SIGNUP ------------------
 if menu_main == "Signup":
     st.subheader("Create Account")
     new_user = st.text_input("Username")
@@ -27,6 +34,7 @@ if menu_main == "Signup":
         conn.commit()
         st.success("Account created. Go to login.")
 
+# ------------------ LOGIN ------------------
 elif menu_main == "Login":
     st.subheader("Login")
     user = st.text_input("Username")
@@ -41,7 +49,9 @@ elif menu_main == "Login":
         else:
             st.error("Invalid login")
 
+# ------------------ MAIN APP ------------------
 elif menu_main == "Enter App":
+
     if "logged" not in st.session_state:
         st.warning("Login first")
         st.stop()
@@ -52,13 +62,12 @@ elif menu_main == "Enter App":
         "📜 AI Drafting",
         "⚖️ Judgment Search",
         "📁 Case CRM",
-        "📄 OCR Scanner",
         "📊 Practice Improvements"
     ])
 
-
-    if menu == "Drafting Engine":
-        st.header("📜 Drafting Engine")
+    # ================== AI DRAFTING ==================
+    if dashboard == "📜 AI Drafting":
+        st.header("📜 AI Legal Drafting")
 
         court = st.selectbox("Select Court",[
             "Session Court",
@@ -75,7 +84,7 @@ elif menu_main == "Enter App":
 
         details = st.text_area("Enter case details")
 
-    if st.button("Generate Draft"):
+        if st.button("Generate Draft"):
             prompt = f"""
             Create a professional {doc_type} for {court} India.
 
@@ -86,11 +95,6 @@ elif menu_main == "Enter App":
             legal language and structure.
             """
 
-            import openai
-            import os
-
-            openai.api_key = st.secrets["OPENAI_API_KEY"]
-
             response = openai.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role":"user","content":prompt}]
@@ -98,26 +102,15 @@ elif menu_main == "Enter App":
 
             result = response.choices[0].message.content
             st.write(result)
-
             st.download_button("Download Draft", result)
 
-    elif menu == "OCR Converter":
-        st.header("OCR Converter")
-        st.write("OCR module coming next...")
-
-    elif menu == "ADR Mediator":
-        st.header("ADR Mediator")
-        st.write("Negotiation AI coming next...")
-
-    elif menu == "Judgments":
+    # ================== JUDGMENT SEARCH ==================
+    elif dashboard == "⚖️ Judgment Search":
         st.header("⚖️ Judgment & Precedent Search")
 
-        case = st.text_input("Enter case type or section (example: cheque bounce 138)")
+        case = st.text_input("Enter case type (example: cheque bounce 138)")
 
-    if st.button("Search Judgments"):
-            import requests
-            from bs4 import BeautifulSoup
-
+        if st.button("Search Judgments"):
             url = f"https://indiankanoon.org/search/?formInput={case}"
             r = requests.get(url)
             soup = BeautifulSoup(r.text,'html.parser')
@@ -127,13 +120,13 @@ elif menu_main == "Enter App":
             for res in results:
                 st.write(res.text)
 
-    if dashboard == "📁 Case CRM":
+    # ================== CRM ==================
+    elif dashboard == "📁 Case CRM":
         st.header("Client Case Manager")
 
-    import sqlite3
-        conn = sqlite3.connect("cases.db",check_same_thread=False)
-        cur = conn.cursor()
-        cur.execute("""CREATE TABLE IF NOT EXISTS cases(
+        conn2 = sqlite3.connect("cases.db",check_same_thread=False)
+        cur2 = conn2.cursor()
+        cur2.execute("""CREATE TABLE IF NOT EXISTS cases(
             case_no TEXT, client TEXT, phone TEXT,
             case_type TEXT, hearing TEXT, fees TEXT)""")
 
@@ -144,18 +137,26 @@ elif menu_main == "Enter App":
         hearing = st.date_input("Next Hearing")
         fees = st.selectbox("Fees",["Paid","Pending","Partial"])
 
-    if st.button("Save Case"):
-            cur.execute("INSERT INTO cases VALUES(?,?,?,?,?,?)",
+        if st.button("Save Case"):
+            cur2.execute("INSERT INTO cases VALUES(?,?,?,?,?,?)",
                         (case_no,client,phone,case_type,str(hearing),fees))
-            conn.commit()
+            conn2.commit()
             st.success("Case saved")
 
         if st.button("Show All Cases"):
-            rows = cur.execute("SELECT * FROM cases").fetchall()
+            rows = cur2.execute("SELECT * FROM cases").fetchall()
             for r in rows:
                 st.write(r)
 
+    # ================== IMPROVEMENTS ==================
+    elif dashboard == "📊 Practice Improvements":
+        st.header("AI Practice Growth Suggestions")
 
-    elif menu == "Improvements":
-        st.header("System Improvements")
-        st.write("AI improvement engine coming next...")
+        text = st.text_area("Describe your practice issues")
+
+        if st.button("Get Suggestions"):
+            response = openai.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role":"user","content":f"Give business growth advice for lawyer: {text}"}]
+            )
+            st.write(response.choices[0].message.content)
