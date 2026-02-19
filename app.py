@@ -57,9 +57,49 @@ elif menu_main == "Enter App":
     "Improvements"
     ])
 
-    if menu == "Drafting Engine":
-        st.header("Drafting Engine")
-        st.write("AI drafting coming next...")
+       if menu == "Drafting Engine":
+        st.header("📜 Drafting Engine")
+
+        court = st.selectbox("Select Court",[
+            "Session Court",
+            "High Court",
+            "Supreme Court"
+        ])
+
+        doc_type = st.selectbox("Select Document",[
+            "Legal Notice",
+            "Affidavit",
+            "Agreement",
+            "NDA"
+        ])
+
+        details = st.text_area("Enter case details")
+
+        if st.button("Generate Draft"):
+            prompt = f"""
+            Create a professional {doc_type} for {court} India.
+
+            Case details:
+            {details}
+
+            Use latest Indian court format with proper headings,
+            legal language and structure.
+            """
+
+            import openai
+            import os
+
+            openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+            response = openai.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role":"user","content":prompt}]
+            )
+
+            result = response.choices[0].message.content
+            st.write(result)
+
+            st.download_button("Download Draft", result)
 
     elif menu == "OCR Converter":
         st.header("OCR Converter")
