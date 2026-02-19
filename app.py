@@ -72,12 +72,14 @@ elif menu_main == "Enter App":
     st.success("Welcome Lawyer 👨‍⚖️")
 
     dashboard = st.sidebar.selectbox("Dashboard",[
-        "📜 AI Drafting",
-        "⚖️ Judgment Search",
-        "📁 Case CRM",
-        "📊 Practice Improvements"
-    ])
-
+    "📜 AI Drafting",
+    "⚖️ Judgment Search",
+    "🤝 ADR Negotiator",
+    "📚 Precedents for Argument",
+    "📁 Case CRM",
+    "📊 Practice Improvements"
+])
+    
     # ================== AI DRAFTING ==================
     if dashboard == "📜 AI Drafting":
         st.header("📜 AI Legal Drafting")
@@ -174,6 +176,122 @@ elif menu_main == "Enter App":
 
             else:
                 st.warning("Enter case number or paste judgment")
+
+    # ================== ADR NEGOTIATOR ==================
+    elif dashboard == "🤝 ADR Negotiator":
+
+        st.header("🤝 AI Mediation & Negotiator")
+
+        case_type = st.selectbox("Select dispute type",[
+            "Property Dispute",
+            "Cheque Bounce",
+            "Divorce / Family",
+            "Business Dispute",
+            "Employment Issue",
+            "Other"
+        ])
+
+        party_a = st.text_input("Party A Argument")
+        party_b = st.text_input("Party B Argument")
+        goal = st.text_area("What is expected resolution? (money, settlement, etc)")
+
+        if st.button("Start AI Mediation"):
+
+            if party_a and party_b:
+
+                with st.spinner("AI negotiating like real mediator..."):
+
+                    prompt = f"""
+                    Act as senior Indian court mediator.
+
+                    Dispute Type: {case_type}
+                    Party A says: {party_a}
+                    Party B says: {party_b}
+                    Expected resolution: {goal}
+
+                    Do following:
+                    1. Analyse both sides
+                    2. Suggest settlement options
+                    3. Give winning probability
+                    4. Give final recommended settlement
+                    """
+
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[{"role":"user","content":prompt}]
+                    )
+
+                    result = response.choices[0].message.content
+                    result = translate_text(result, lang)
+
+                    st.success("Mediation Result")
+                    st.write(result)
+                    st.download_button("Download Settlement", result)
+
+            else:
+                st.warning("Enter both party arguments")
+
+     # ================== PRECEDENTS FOR ARGUMENT ==================
+    elif dashboard == "📚 Precedents for Argument":
+
+        st.header("📚 AI Precedent Finder for Court Arguments")
+
+        case_topic = st.text_input("Enter case topic (example: cheque bounce 138 NI Act)")
+        your_side = st.selectbox("Which side?",["Petitioner","Respondent","Accused","Complainant"])
+        facts = st.text_area("Enter brief case facts")
+
+        if st.button("Find Strong Precedents"):
+
+            if case_topic:
+
+                with st.spinner("Finding best court precedents..."):
+
+                    # ---- AI PRECEDENT SEARCH ----
+                    prompt = f"""
+                    You are senior Supreme Court legal researcher.
+
+                    Case topic: {case_topic}
+                    My side: {your_side}
+                    Case facts: {facts}
+
+                    Provide:
+                    - 5 strongest Indian precedents
+                    - Court name
+                    - Year
+                    - Legal principle
+                    - How to use in argument
+                    """
+
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[{"role":"user","content":prompt}]
+                    )
+
+                    result = response.choices[0].message.content
+                    result = translate_text(result, lang)
+
+                    st.success("Top Precedents for Argument")
+                    st.write(result)
+
+                    # ---- OPTIONAL SCRAPER ----
+                    try:
+                        url = f"https://indiankanoon.org/search/?formInput={case_topic}"
+                        r = requests.get(url, headers={"User-Agent":"Mozilla/5.0"})
+                        soup = BeautifulSoup(r.text,'html.parser')
+                        results = soup.select(".result_title")[:5]
+
+                        st.subheader("🔗 Relevant Case Links")
+                        for res in results:
+                            st.write(res.text)
+
+                    except:
+                        pass
+
+                    st.download_button("Download Precedents", result)
+
+            else:
+                st.warning("Enter case topic")
+
 
     # ================== CRM ==================
     elif dashboard == "📁 Case CRM":
