@@ -1,3 +1,6 @@
+ pytesseract
+pdf2image
+Pillow
 streamlit
 openai
 beautifulsoup4
