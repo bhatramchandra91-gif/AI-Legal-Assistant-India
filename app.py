@@ -349,12 +349,12 @@ elif menu_main == "Enter App":
             else:
                 st.warning("Enter case topic")
 
-        # ================== OCR PDF / IMAGE CONVERTER ==================
-        elif dashboard == "📄 OCR PDF/Image Converter":
+    # ================== OCR PDF / IMAGE CONVERTER ==================
+    elif dashboard == "📄 OCR PDF/Image Converter":
 
-            st.header("📄 OCR Converter – PDF/Image to Searchable Text")
+        st.header("📄 OCR Converter – PDF/Image to Searchable Text")
 
-            uploaded_file = st.file_uploader(
+        uploaded_file = st.file_uploader(
                "Upload scanned PDF or image",
                 type=["pdf","png","jpg","jpeg"]
         )
