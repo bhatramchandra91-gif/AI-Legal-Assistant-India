@@ -79,7 +79,7 @@ elif menu_main == "Enter App":
         "⚖️ Judgment Search",
         "🤝 ADR Negotiator",
         "📚 Precedents for Argument",
-        "📄 OCR PDF/Image Converter"
+        "📄 OCR PDF/Image Converter",
         "📁 Case CRM",
         "📊 Practice Improvements"
     ])
