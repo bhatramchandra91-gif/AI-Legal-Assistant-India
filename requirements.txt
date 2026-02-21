@@ -1,8 +1,3 @@
-tesseract-ocr
-poppler-utils 
-pytesseract
-pdf2image
-Pillow
 streamlit
 openai
 beautifulsoup4
