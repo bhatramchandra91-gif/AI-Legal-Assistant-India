@@ -3,4 +3,5 @@ openai
 beautifulsoup4
 requests
 sqlalchemy
-
+tesseract-ocr
+poppler-utils
