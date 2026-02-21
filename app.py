@@ -3,9 +3,6 @@ import sqlite3
 from openai import OpenAI
 import requests
 from bs4 import BeautifulSoup
-import pytesseract
-from pdf2image import convert_from_bytes
-from PIL import Image
 
 # ------------------ OPENAI ------------------
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
