@@ -79,7 +79,6 @@ elif menu_main == "Enter App":
         "⚖️ Judgment Search",
         "🤝 ADR Negotiator",
         "📚 Precedents for Argument",
-        "📄 OCR PDF/Image Converter",
         "📁 Case CRM",
         "📊 Practice Improvements"
     ])
@@ -348,52 +347,6 @@ elif menu_main == "Enter App":
                     st.download_button("Download Precedents", result)
             else:
                 st.warning("Enter case topic")
-
-    # ================== OCR PDF / IMAGE CONVERTER ==================
-    elif dashboard == "📄 OCR PDF/Image Converter":
-
-        st.header("📄 OCR Converter – PDF/Image to Searchable Text")
-
-        uploaded_file = st.file_uploader(
-               "Upload scanned PDF or image",
-                type=["pdf","png","jpg","jpeg"]
-        )
-
-        if uploaded_file:
-
-            st.success("File uploaded successfully")
-
-            if st.button("Extract Text using OCR"):
-
-                with st.spinner("Performing OCR..."):
-
-                    text_output = ""
-
-                    try:
-                        # ---- IF PDF ----
-                        if uploaded_file.type == "application/pdf":
-                            pages = convert_from_bytes(uploaded_file.read())
-                            for page in pages:
-                                text_output += pytesseract.image_to_string(page)
-
-                        # ---- IF IMAGE ----
-                        else:
-                            image = Image.open(uploaded_file)
-                            text_output = pytesseract.image_to_string(image)
-
-                        if text_output.strip():
-
-                            text_output = translate_text(text_output, lang)
-
-                            st.success("OCR Extraction Completed")
-                            st.text_area("Extracted Text", text_output, height=400)
-                            st.download_button("Download Text File", text_output)
-
-                        else:
-                            st.warning("No readable text detected.")
-
-                    except Exception as e:
-                        st.error("OCR failed. Make sure Tesseract is installed.")
 
     # ================== CRM ==================
     elif dashboard == "📁 Case CRM":
